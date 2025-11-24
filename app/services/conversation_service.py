@@ -1,0 +1,63 @@
+from app.models.conversation_model import ConversationModel as Conversation
+from app.db import db
+
+class ConversationService:
+    def get_all(self):
+        return Conversation.query.order_by(Conversation.updated_at.desc()).all()
+
+    def get(self, conversation_id):
+        return Conversation.query.get(conversation_id)
+
+
+    def ask_ai(self, conversation_id, user_id, message_text):
+        """
+        Gửi tin nhắn từ user, fake trả lời AI, lưu cả 2 message
+        """
+
+        # 1️⃣ Lưu message từ user
+        user_message = chat_service.create_message({
+            "conversation_id": conversation_id,
+            "sender": "user",
+            "user_id": user_id,
+            "message": message_text,
+            "message_type": "text"
+        })
+
+        # 2️⃣ Fake trả lời từ AI
+        ai_text = f"Đây là phản hồi giả từ AI cho tin nhắn: '{message_text}'"
+
+        # 3️⃣ Lưu message từ AI
+        ai_message = chat_service.create_message({
+            "conversation_id": conversation_id,
+            "sender": "bot",
+            "user_id": None,
+            "message": ai_text,
+            "message_type": "text"
+        })
+
+        # 4️⃣ Cập nhật updated_at cho conversation
+        conv = self.get(conversation_id)
+        if conv:
+            conv.updated_at = datetime.utcnow()
+            db.session.commit()
+
+        return ai_message
+
+    def update(self, conversation_id, data):
+        conv = self.get(conversation_id)
+        if not conv:
+            raise ValueError("Conversation not found")
+        for field in ["title", "user_id"]:
+            if field in data:
+                setattr(conv, field, data[field])
+        db.session.commit()
+        return conv
+
+    def delete(self, conversation_id):
+        conv = self.get(conversation_id)
+        if not conv:
+            raise ValueError("Conversation not found")
+        db.session.delete(conv)
+        db.session.commit()
+
+conversation_service = ConversationService()

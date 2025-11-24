@@ -1,7 +1,7 @@
 from app.models.chat_message_model import ChatMessageModel as ChatMessage
 from app.db import db
 from sqlalchemy.exc import SQLAlchemyError
-
+from datetime import datetime
 
 class ChatService:
     def get_all_messages_by_conversation(self, conversation_id):
@@ -22,6 +22,7 @@ class ChatService:
 
     def create_message(self, data):
         """Tạo tin nhắn mới"""
+
         message = ChatMessage(
             conversation_id=data.get("conversation_id"),
             sender=data.get("sender"),

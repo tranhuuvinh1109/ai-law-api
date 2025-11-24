@@ -1,5 +1,7 @@
 from app.models.conversation_model import ConversationModel as Conversation
+from app.services.chat_service import chat_service
 from app.db import db
+from datetime import datetime
 
 class ConversationService:
     def get_all(self):

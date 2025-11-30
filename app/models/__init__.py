@@ -7,3 +7,7 @@ from app.models.user_role_model import UserRoleModel
 from app.models.blog_model import BlogModel
 from app.models.conversation_model import ConversationModel
 from app.models.chat_message_model import ChatMessageModel
+from app.models.category_model import CategoryModel
+from app.models.procedure_model import ProcedureModel
+from app.models.procedure_steps_model import ProcedureStepModel
+from app.models.procedure_documents_model import ProcedureDocumentModel

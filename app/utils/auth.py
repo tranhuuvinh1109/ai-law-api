@@ -43,8 +43,9 @@ def token_not_fresh_callback(jwt_header, jwt_payload):
 
 @jwt.additional_claims_loader
 def add_claims_to_jwt(identity):
-    # Look in admin in database
-    if identity == 1:
+    # identity is user ID, check role from database
+    user = UserModel.query.filter_by(id=identity).first()
+    if user and user.role == 1:  # 1: admin, 2: user
         return {"is_admin": True}
     return {"is_admin": False}
 

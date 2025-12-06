@@ -1,30 +1,38 @@
 from marshmallow import Schema, fields
 
-from app.schemas.permission_schema import PlainPermissionSchema
-from app.schemas.role_schema import PlainRoleSchema
-
 
 class PlainUserSchema(Schema):
     # Dump only: only read
     id = fields.Str(dump_only=True)
     username = fields.Str(required=True)
+    email = fields.Str(required=True)
     password = fields.Str(required=True)
+    role = fields.Int(required=True)
     time_created = fields.Str(dump_only=True)
 
 
 class UserUpdateSchema(Schema):
     username = fields.Str(allow_none=True, required=True)
     password = fields.Str(allow_none=True, required=True)
-    roles = fields.List(cls_or_instance=fields.Int, required=True)
+    role = fields.Int(allow_none=True, required=True)
 
 
 class UserSchema(PlainUserSchema):
     block = fields.Bool(dump_only=True)
-    roles = fields.List(fields.Nested(PlainRoleSchema()), dump_only=True)
+
+
+class UserResponseSchema(Schema):
+    """Schema for user response without password"""
+    id = fields.Str(dump_only=True)
+    username = fields.Str(dump_only=True)
+    email = fields.Str(dump_only=True)
+    role = fields.Int(dump_only=True)
+    block = fields.Bool(dump_only=True)
+    time_created = fields.Str(dump_only=True)
 
 
 class UserExportSchema(Schema):
-    role_id = fields.Int(allow_none=True, required=True)
+    role = fields.Int(allow_none=True, required=True)
     search_content = fields.Str(allow_none=True, required=True)
 
 
@@ -39,20 +47,6 @@ class UserPageSchema(Schema):
     total_user = fields.Int()
 
 
-class UserAndRoleSchema(Schema):
-    message = fields.Str()
-    user = fields.Nested(PlainUserSchema)
-    role = fields.Nested(PlainRoleSchema)
-
-
-class RoleAndPermissionSchema(Schema):
-    message = fields.Str()
-    role = fields.Nested(PlainRoleSchema)
-    permission = fields.Nested(PlainPermissionSchema)
-
-
-class UpdateUserRoleSchema(Schema):
-    roles = fields.List(cls_or_instance=fields.Int, required=True)
 
 
 class UpdateBlockUserSchema(Schema):
@@ -61,6 +55,19 @@ class UpdateBlockUserSchema(Schema):
 
 class CheckUserExistsSchema(Schema):
     email = fields.Str(required=True)
+
+
+class UserRegisterSchema(Schema):
+    """Schema for user registration - only requires username, email, password"""
+    username = fields.Str(required=True)
+    email = fields.Str(required=True)
+    password = fields.Str(required=True)
+
+
+class UserLoginInputSchema(Schema):
+    """Schema for user login - only requires email and password"""
+    email = fields.Str(required=True)
+    password = fields.Str(required=True)
 
 
 class UserLoginSchema(Schema):

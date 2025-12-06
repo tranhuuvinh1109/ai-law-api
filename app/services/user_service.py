@@ -12,9 +12,7 @@ from sqlalchemy import asc
 
 from app.db import db
 from app.models.blocklist_model import BlocklistModel
-from app.models.role_model import RoleModel
 from app.models.user_model import UserModel
-from app.services import user_role_service
 
 # Create logger for this module
 logger = logging.getLogger(__name__)
@@ -45,12 +43,9 @@ def update_user(user_data, user_id):
             password = pbkdf2_sha256.hash(user_data["password"])
             user.password = password
 
-        # Update roles
-        user.roles = []
-
-        for role_id in user_data["roles"]:
-            role = RoleModel.query.filter_by(id=role_id).first()
-            user.roles.append(role)
+        # Update role if provided
+        if "role" in user_data and user_data["role"]:
+            user.role = user_data["role"]
 
         db.session.commit()
     except Exception as ex:
@@ -109,20 +104,34 @@ def delete_user(id):
 
 
 def login_user(user_data):
-    # Check user name
-    user = UserModel.query.filter(UserModel.username == user_data["username"]).first()
+    # Check user by email
+    user = UserModel.query.filter(UserModel.email == user_data["email"]).first()
 
     # Verify
     if user and pbkdf2_sha256.verify(user_data["password"], user.password):
-        # Create access_token
+        # Create access_token - identity is user ID
         access_token = create_access_token(identity=user.id, fresh=True)
 
         # Create refresh_token
         refresh_token = create_refresh_token(identity=user.id)
 
-        logger.info(f"User login successfully! user_name: {user_data['username']}")
+        logger.info(f"User login successfully! email: {user_data['email']}")
 
-        return {"access_token": access_token, "refresh_token": refresh_token}
+        # Return user info without password
+        user_info = {
+            "id": str(user.id),
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "block": user.block,
+            "time_created": user.time_created
+        }
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": user_info
+        }
 
     logger.error("Invalid credentials.")
     abort(401, message="Invalid credentials.")
@@ -130,6 +139,7 @@ def login_user(user_data):
 
 def register_user(user_data):
     username = user_data["username"]
+    email = user_data["email"]
     password = user_data["password"]
 
     # Check user name exist
@@ -138,10 +148,16 @@ def register_user(user_data):
         logger.error("Username already exists.")
         abort(400, message="Username already exists.")
 
+    # Check email exist
+    user = UserModel.query.filter(UserModel.email == email).first()
+    if user:
+        logger.error("Email already exists.")
+        abort(400, message="Email already exists.")
+
     # Hash password
     password = pbkdf2_sha256.hash(password)
 
-    new_user = UserModel(username=username, password=password)
+    new_user = UserModel(username=username, email=email, password=password)
 
     try:
         db.session.add(new_user)
@@ -152,13 +168,7 @@ def register_user(user_data):
         logger.error(f"Can not register! Error: {ex}")
         abort(400, message=f"Can not register! Error: {ex}")
 
-    try:
-        # Add default role for user
-        user_role_service.link_roles_to_user(user_id=new_user.id, role_id=3)
-
-    except Exception as ex:
-        logger.error(f"Can not register! - Can not add role default. Error: {ex}")
-        abort(400, message=f"Can not register! - Can not add role default. Error: {ex}")
+    # Default role is already set in UserModel (role=2 for regular user)
 
     return {"message": "Register successfully!"}
 
@@ -180,6 +190,33 @@ def refresh_token():
     add_jti_blocklist(jti)
 
     return {"access_token": access_token, "refresh_token": refresh_token}
+
+
+def get_current_user():
+    """
+    Get current user information from JWT token
+    """
+    # Get user ID from JWT token
+    current_user_id = get_jwt_identity()
+    
+    # Query user from database
+    user = UserModel.query.filter_by(id=current_user_id).first()
+    
+    if not user:
+        logger.error("User not found!")
+        abort(404, message="User not found!")
+    
+    # Return user info without password
+    user_info = {
+        "id": str(user.id),
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "block": user.block,
+        "time_created": user.time_created
+    }
+    
+    return user_info
 
 
 def add_jti_blocklist(jti):

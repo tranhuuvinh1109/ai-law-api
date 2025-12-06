@@ -8,7 +8,8 @@ class UserModel(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(), nullable=False)
-    block = db.Column(db.Boolean, default=False, nullable=False)
+    role = db.Column(db.Integer, default=2)  # 1: admin, 2: user
+    block = db.Column(db.Boolean, default=False)
     time_created = db.Column(db.String(), default=datetime.now())
-    roles = db.relationship("RoleModel", back_populates="users", secondary="user_role")

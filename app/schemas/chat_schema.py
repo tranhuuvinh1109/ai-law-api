@@ -7,6 +7,9 @@ class ConversationSchema(Schema):
     created_at = fields.DateTime()
     updated_at = fields.DateTime()
 
+class ConversationCreateSchema(Schema):
+    title = fields.Str(required=False, allow_none=True)
+
 class ConversationUpdateSchema(Schema):
     title = fields.Str()
     user_id = fields.Int()
@@ -14,8 +17,8 @@ class ConversationUpdateSchema(Schema):
 class ChatMessageSchema(Schema):
     id = fields.Int()
     conversation_id = fields.Str()
-    sender = fields.Str()
-    user_id = fields.Int()
+    sender_id = fields.Int(allow_none=True)
     message = fields.Str()
     message_type = fields.Str()
+    metadata = fields.Dict(allow_none=True, attribute="message_metadata")  # Map từ message_metadata (model) sang metadata (API)
     created_at = fields.DateTime()

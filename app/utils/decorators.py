@@ -12,17 +12,15 @@ logger = logging.getLogger(__name__)
 
 
 def permission_required(permission_name):
+    """Simplified permission check - only checks if user is admin (role == 1)"""
     def decorator(func):
         def wrapper(*arg, **kwargs):
             jwt_data = get_jwt()
-            user_id = jwt_data["sub"]
-            user = UserModel.query.filter_by(id=user_id).first()
-            for role in user.roles:
-                for permission in role.permissions:
-                    if permission.name == permission_name:
-                        return func(*arg, **kwargs)
-            logger.error("User does not have permission to access this API!")
-            abort(403, message="User does not have permission to access this API!")
+            is_admin = jwt_data.get("is_admin", False)
+            if not is_admin:
+                logger.error("Admin privilege required!")
+                abort(403, message="Admin privilege required!")
+            return func(*arg, **kwargs)
 
         return wrapper
 

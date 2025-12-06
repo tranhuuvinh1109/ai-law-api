@@ -134,6 +134,13 @@ flask create-user-admin
 
 # Run a development server
 flask run
+
+# Create new migration
+flask db migrate -m "..."
+
+# Run migration 
+flask run-migration name.sql
+
 ```
 
 ### Testing

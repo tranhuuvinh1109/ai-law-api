@@ -1,21 +1,33 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from app.schemas.chat_schema import ConversationSchema, ConversationUpdateSchema, ChatMessageSchema
+from app.schemas.chat_schema import ConversationSchema, ConversationCreateSchema, ConversationUpdateSchema, ChatMessageSchema
 from app.services.conversation_service import conversation_service
 from app.services.chat_service import chat_service
 
 blp = Blueprint("Conversation", __name__, description="Conversation API")
 
 
-@blp.route("/conversations")
+@blp.route("/conversation")
 class ConversationList(MethodView):
+    @jwt_required()
     @blp.response(200, ConversationSchema(many=True))
     def get(self):
-        """Get all conversations"""
-        return conversation_service.get_all()
+        """Get all conversations of current user"""
+        user_id = get_jwt_identity()
+        return conversation_service.get_all(user_id)
 
-@blp.route("/conversations/<string:conversation_id>")
+    @jwt_required()
+    @blp.arguments(ConversationCreateSchema)
+    @blp.response(201, ConversationSchema)
+    def post(self, data):
+        """Create a new conversation for current user"""
+        user_id = get_jwt_identity()
+        title = data.get("title")
+        return conversation_service.create(user_id, title)
+
+@blp.route("/conversation/<string:conversation_id>")
 class ConversationDetail(MethodView):
     @blp.response(200, ConversationSchema)
     def get(self, conversation_id):
@@ -37,7 +49,7 @@ class ConversationDetail(MethodView):
         conversation_service.delete(conversation_id)
         return {}
 
-@blp.route("/conversations/<string:conversation_id>/messages")
+@blp.route("/conversation/<string:conversation_id>/messages")
 class ConversationMessages(MethodView):
     @blp.response(200, ChatMessageSchema(many=True))
     def get(self, conversation_id):
@@ -45,8 +57,9 @@ class ConversationMessages(MethodView):
         messages = chat_service.get_all_messages_by_conversation(conversation_id)
         return messages
 
-@blp.route("/conversations/<string:conversation_id>/ask")
+@blp.route("/conversation/<string:conversation_id>/ask")
 class ConversationAskAI(MethodView):
+    @jwt_required()
     @blp.arguments(ChatMessageSchema)
     @blp.response(201, ChatMessageSchema)
     def post(self, data, conversation_id):
@@ -54,15 +67,15 @@ class ConversationAskAI(MethodView):
         User gửi tin nhắn đến AI, fake trả lời từ bot, lưu cả 2 message
         Body:
         {
-            "user_id": 1,
-            "message": "Nội dung câu hỏi"
+            "message": "Nội dung câu hỏi",
+            "metadata": {} (optional)
         }
         """
-        user_id = data.get("user_id")
+        user_id = get_jwt_identity()  # Lấy user_id từ token
         message_text = data.get("message")
 
-        if not message_text or not user_id:
-            abort(400, message="user_id và message là bắt buộc")
+        if not message_text:
+            abort(400, message="message là bắt buộc")
 
         # Gọi service để fake AI trả lời
         bot_message = conversation_service.ask_ai(

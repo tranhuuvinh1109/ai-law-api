@@ -35,9 +35,10 @@ class UsersUnitTests(unittest.TestCase):
 
         with self.app.app_context():
             username = "test_user"
+            email = "test@example.com"
             password = "123456"
 
-            user = UserModel(username=username, password=pbkdf2_sha256.hash(password))
+            user = UserModel(username=username, email=email, password=pbkdf2_sha256.hash(password))
 
             # Add to database
             db.session.add(user)

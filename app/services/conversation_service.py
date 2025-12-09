@@ -4,7 +4,9 @@ from app.db import db
 from datetime import datetime
 import uuid
 from openai import OpenAI
+import os
 
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 class ConversationService:
     def get_all(self, user_id):
@@ -106,10 +108,8 @@ class ConversationService:
             db.session.commit()
 
         # 5️⃣ Trả JSON chuẩn → tránh lỗi Axios
-        return {
-            "user_message": user_message,
-            "ai_message": ai_message
-        }
+        return ai_message
+        
 
     def update(self, conversation_id, data):
         conv = self.get(conversation_id)

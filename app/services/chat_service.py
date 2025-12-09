@@ -25,10 +25,10 @@ class ChatService:
 
         message = ChatMessage(
             conversation_id=data.get("conversation_id"),
-            sender=data.get("sender"),
-            user_id=data.get("user_id"),
+            sender_id=data.get("sender_id"),
             message=data.get("message"),
             message_type=data.get("message_type", "text"),
+            message_metadata=data.get("metadata"),
         )
         try:
             db.session.add(message)
@@ -41,9 +41,15 @@ class ChatService:
     def update_message(self, message_id, data):
         """Cập nhật tin nhắn"""
         message = self.get_message(message_id)
-        for field in ["message", "message_type"]:
-            if field in data:
-                setattr(message, field, data[field])
+        # Map metadata từ API sang message_metadata trong model
+        field_mapping = {
+            "message": "message",
+            "message_type": "message_type",
+            "metadata": "message_metadata"
+        }
+        for api_field, model_field in field_mapping.items():
+            if api_field in data:
+                setattr(message, model_field, data[api_field])
         try:
             db.session.commit()
             return message

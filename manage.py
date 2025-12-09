@@ -1,16 +1,14 @@
 import unittest
+import os
 
 import click
 import coverage
 from passlib.hash import pbkdf2_sha256
+from sqlalchemy import text
 
 from app.db import db
 from app.models import (
-    PermissionModel,
-    RoleModel,
-    RolePermissionModel,
     UserModel,
-    UserRoleModel,
 )
 
 
@@ -85,6 +83,19 @@ def reset_db():
     """
     Reset Database.
     """
+    # Drop old role/permission tables first (if they exist)
+    # These tables may have foreign key constraints
+    try:
+        db.session.execute(text("DROP TABLE IF EXISTS user_role CASCADE"))
+        db.session.execute(text("DROP TABLE IF EXISTS role_permission CASCADE"))
+        db.session.execute(text("DROP TABLE IF EXISTS role CASCADE"))
+        db.session.execute(text("DROP TABLE IF EXISTS permission CASCADE"))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Note: Some old tables may not exist: {e}")
+    
+    # Now drop all tables defined in models
     db.drop_all()
     db.create_all()
     db.session.commit()
@@ -94,58 +105,26 @@ def drop_db():
     """
     Drop Database.
     """
+    # Drop old role/permission tables first (if they exist)
+    try:
+        db.session.execute(db.text("DROP TABLE IF EXISTS user_role CASCADE"))
+        db.session.execute(db.text("DROP TABLE IF EXISTS role_permission CASCADE"))
+        db.session.execute(db.text("DROP TABLE IF EXISTS role CASCADE"))
+        db.session.execute(db.text("DROP TABLE IF EXISTS permission CASCADE"))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Note: Some old tables may not exist: {e}")
+    
+    # Now drop all tables defined in models
     db.drop_all()
     db.session.commit()
 
 
 def init_db_user():
-    # Insert Permission
-    read_perrmission = PermissionModel(name="read", description="Read data")
-    write_perrmission = PermissionModel(name="write", description="Write data")
-    delete_perrmission = PermissionModel(name="delete", description="Delete data")
-    db.session.add_all([read_perrmission, write_perrmission, delete_perrmission])
-    db.session.commit()
-
-    # Insert Role
-    admin_role = RoleModel(name="Admin", description="Full Permission")
-    user_role = RoleModel(name="User", description="Can read, write data")
-    guest_role = RoleModel(name="Guest", description="Just read data")
-    db.session.add_all([admin_role, user_role, guest_role])
-    db.session.commit()
-
-    # Insert Role_Permission
-    role_permission_admin1 = RolePermissionModel(role_id=1, permission_id=1)
-    role_permission_admin2 = RolePermissionModel(role_id=1, permission_id=2)
-    role_permission_admin3 = RolePermissionModel(role_id=1, permission_id=3)
-    role_permission_user1 = RolePermissionModel(role_id=2, permission_id=1)
-    role_permission_user2 = RolePermissionModel(role_id=2, permission_id=2)
-    role_permission_guest = RolePermissionModel(role_id=3, permission_id=1)
-    db.session.add_all(
-        [
-            role_permission_admin1,
-            role_permission_admin2,
-            role_permission_admin3,
-            role_permission_user1,
-            role_permission_user2,
-            role_permission_guest,
-        ]
-    )
-    db.session.commit()
-
-    # Insert User
-    password = pbkdf2_sha256.hash("123456")
-    admin_user = UserModel(username="admin", password=password)
-    normal_user = UserModel(username="user", password=password)
-    guest_user = UserModel(username="guest", password=password)
-    db.session.add_all([admin_user, normal_user, guest_user])
-    db.session.commit()
-
-    # Insert UserRole
-    user_role1 = UserRoleModel(user_id=1, role_id=1)
-    user_role2 = UserRoleModel(user_id=2, role_id=2)
-    user_role3 = UserRoleModel(user_id=3, role_id=3)
-    db.session.add_all([user_role1, user_role2, user_role3])
-    db.session.commit()
+    # Users are created with default role=2 (regular user)
+    # Admin users should have role=1
+    pass
 
 
 def create_user_admin(username="admin"):
@@ -161,18 +140,46 @@ def create_user_admin(username="admin"):
         print("user-admin is created!")
 
 
+@click.argument("filename")
+def run_migration(filename):
+    """
+    Run a specific SQL migration file from migrations folder.
+    Usage: flask run-migration migration_update_chat_message.sql
+    """
+    migrations_dir = os.path.join(os.path.dirname(__file__), "migrations")
+    file_path = os.path.join(migrations_dir, filename)
+    
+    if not os.path.exists(file_path):
+        click.echo(f"Error: File {file_path} not found!", err=True)
+        return 1
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            sql_content = f.read()
+        
+        click.echo(f"Running migration: {filename}")
+        # Execute SQL file
+        db.session.execute(text(sql_content))
+        db.session.commit()
+        click.echo(f"✓ Migration {filename} completed successfully!")
+        return 0
+    except Exception as e:
+        db.session.rollback()
+        click.echo(f"✗ Error running migration: {str(e)}", err=True)
+        return 1
+
+
 def init_app(app):
     if app.config["APP_ENV"] == "production":
-        commands = [create_db, reset_db, drop_db, create_user_admin]
+        commands = [create_db, reset_db, drop_db, run_migration]
     else:
         commands = [
             create_db,
             reset_db,
             drop_db,
-            create_user_admin,
-            tests,
             cov_html,
             cov,
+            run_migration,
         ]
 
     for command in commands:

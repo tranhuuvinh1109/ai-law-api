@@ -18,8 +18,8 @@ class DefaultConfig:
 
     # Configuration of Flask-JWT-Extended
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
-    # Determines the minutes that the access token remains active
-    JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(minutes=30)
+    # Determines the minutes that the access token remains active (1 year)
+    JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(days=365)
     # Determines the days that the refresh token remains active
     JWT_REFRESH_TOKEN_EXPIRES = datetime.timedelta(days=30)
     # Algorithm used to generate the token

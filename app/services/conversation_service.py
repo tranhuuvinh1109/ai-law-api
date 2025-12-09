@@ -2,13 +2,26 @@ from app.models.conversation_model import ConversationModel as Conversation
 from app.services.chat_service import chat_service
 from app.db import db
 from datetime import datetime
+import uuid
 
 class ConversationService:
-    def get_all(self):
-        return Conversation.query.order_by(Conversation.updated_at.desc()).all()
+    def get_all(self, user_id):
+        return Conversation.query.filter_by(user_id=user_id).order_by(Conversation.updated_at.desc()).all()
 
     def get(self, conversation_id):
         return Conversation.query.get(conversation_id)
+
+    def create(self, user_id, title=None):
+        """Tạo conversation mới với user_id từ token"""
+        conversation_id = str(uuid.uuid4())
+        conversation = Conversation(
+            id=conversation_id,
+            user_id=user_id,
+            title=title or "Untitled"
+        )
+        db.session.add(conversation)
+        db.session.commit()
+        return conversation
 
 
     def ask_ai(self, conversation_id, user_id, message_text):
@@ -19,8 +32,7 @@ class ConversationService:
         # 1️⃣ Lưu message từ user
         user_message = chat_service.create_message({
             "conversation_id": conversation_id,
-            "sender": "user",
-            "user_id": user_id,
+            "sender_id": user_id,
             "message": message_text,
             "message_type": "text"
         })
@@ -28,11 +40,10 @@ class ConversationService:
         # 2️⃣ Fake trả lời từ AI
         ai_text = f"Đây là phản hồi giả từ AI cho tin nhắn: '{message_text}'"
 
-        # 3️⃣ Lưu message từ AI
+        # 3️⃣ Lưu message từ AI (sender_id = None vì là bot)
         ai_message = chat_service.create_message({
             "conversation_id": conversation_id,
-            "sender": "bot",
-            "user_id": None,
+            "sender_id": None,
             "message": ai_text,
             "message_type": "text"
         })

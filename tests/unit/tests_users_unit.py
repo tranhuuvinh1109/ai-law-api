@@ -34,11 +34,12 @@ class UsersUnitTests(unittest.TestCase):
         """
         # Given
         username = "test_user"
+        email = "test@example.com"
         password = "123456"
 
         # When
         with self.app.app_context():
-            user = UserModel(username=username, password=pbkdf2_sha256.hash(password))
+            user = UserModel(username=username, email=email, password=pbkdf2_sha256.hash(password))
 
         # Then
         # Assertions to check if the user object is created correctly

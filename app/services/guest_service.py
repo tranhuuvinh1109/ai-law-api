@@ -53,7 +53,7 @@ def create_guest_user():
 
         return {
             "access_token": access_token,
-            "user_id": guest_user.id,
+            "id": guest_user.id,
             "username": username,
             "email": email,
             "user_type": "guest",

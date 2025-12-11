@@ -4,7 +4,7 @@ from marshmallow import Schema, fields
 class GuestResponseSchema(Schema):
     """Schema for guest user creation response"""
     access_token = fields.Str(required=True, description="JWT access token for guest")
-    user_id = fields.Int(required=True, description="User ID of the guest")
+    id = fields.Int(required=True, description="User ID of the guest")
     username = fields.Str(required=True, description="Username of the guest")
     email = fields.Str(required=True, description="Email of the guest")
     user_type = fields.Str(required=True, description="Type of user (always 'guest')")

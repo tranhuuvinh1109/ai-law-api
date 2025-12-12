@@ -58,7 +58,8 @@ def create_guest_user():
             "email": email,
             "user_type": "guest",
             "expires_in": 86400,  # 24 hours in seconds
-            "message": "Guest user created successfully"
+            "message": "Guest user created successfully",
+            "role": 3
         }
 
     except Exception as e:

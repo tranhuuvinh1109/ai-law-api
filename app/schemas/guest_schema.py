@@ -10,6 +10,7 @@ class GuestResponseSchema(Schema):
     user_type = fields.Str(required=True, description="Type of user (always 'guest')")
     expires_in = fields.Int(required=True, description="Token expiration time in seconds")
     message = fields.Str(required=True, description="Success message")
+    role = fields.Int(required=True, description="role")
 
 
 class GuestInfoSchema(Schema):

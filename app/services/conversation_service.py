@@ -1,5 +1,6 @@
 from app.models.conversation_model import ConversationModel as Conversation
 from app.services.chat_service import chat_service
+from app.services.ai_usage_service import deduct_user_balance, create_ai_usage
 from app.db import db
 from datetime import datetime
 import uuid
@@ -58,9 +59,10 @@ class ConversationService:
     #         db.session.commit()
 
     #     return ai_message
-    def ask_ai(self, conversation_id, user_id, message_text):
+    def ask_ai(self, conversation_id, user_id, message_text, model=None):
         """
         Gửi message user → gọi GPT → lưu message AI → cập nhật conversation → trả JSON hợp lệ
+        Nếu model được cung cấp, sẽ trừ tiền và lưu lịch sử sử dụng AI
         """
 
         # 1️⃣ Lưu message từ user
@@ -107,7 +109,25 @@ class ConversationService:
             conv.updated_at = datetime.utcnow()
             db.session.commit()
 
-        # 5️⃣ Trả JSON chuẩn → tránh lỗi Axios
+        # 5️⃣ Nếu có model, trừ tiền và lưu lịch sử sử dụng AI
+        if model and not ai_text.startswith("[AI ERROR]"):
+            try:
+                # Trừ 500 từ balance user
+                deduct_user_balance(user_id, 500)
+
+                # Lưu lịch sử sử dụng AI
+                create_ai_usage({
+                    "user_id": user_id,
+                    "conversation_id": conversation_id,
+                    "model": model,
+                    "tokens_used": len(message_text.split()) + len(ai_text.split()),  # Rough token estimate
+                    "cost": 500.0  # Fixed cost as per requirement
+                })
+            except Exception as deduct_error:
+                # Nếu trừ tiền thất bại, ghi log nhưng không làm gián đoạn flow chính
+                print(f"Warning: Failed to deduct balance for user {user_id}: {str(deduct_error)}")
+
+        # 6️⃣ Trả JSON chuẩn → tránh lỗi Axios
         return ai_message
         
 

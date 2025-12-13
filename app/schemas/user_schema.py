@@ -8,6 +8,7 @@ class PlainUserSchema(Schema):
     email = fields.Str(required=True)
     password = fields.Str(required=True)
     role = fields.Int(required=True)
+    balance = fields.Float(dump_only=True)
     time_created = fields.Str(dump_only=True)
 
 
@@ -27,6 +28,7 @@ class UserResponseSchema(Schema):
     username = fields.Str(dump_only=True)
     email = fields.Str(dump_only=True)
     role = fields.Int(dump_only=True)
+    balance = fields.Float(dump_only=True)
     block = fields.Bool(dump_only=True)
     time_created = fields.Str(dump_only=True)
 

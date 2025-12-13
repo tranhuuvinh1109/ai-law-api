@@ -12,4 +12,5 @@ class UserModel(db.Model):
     password = db.Column(db.String(), nullable=False)
     role = db.Column(db.Integer, default=2)  # 1: admin, 2: user, 3: guest
     block = db.Column(db.Boolean, default=False)
+    balance = db.Column(db.Float, default=0.0)  # Số dư tài khoản
     time_created = db.Column(db.String(), default=datetime.now())

@@ -30,3 +30,16 @@ class GuestCreateResponseSchema(Schema):
     data = fields.Nested(GuestResponseSchema, required=True, description="Guest user data")
     message = fields.Str(required=True, description="Response message")
 
+
+class UpgradeGuestSchema(Schema):
+    """Schema for upgrading guest to regular user"""
+    email = fields.Str(required=True, description="New email for the user")
+    username = fields.Str(required=True, description="New username for the user")
+    password = fields.Str(required=True, description="New password for the user")
+
+
+class UpgradeGuestResponseSchema(Schema):
+    """Schema for upgrade guest response"""
+    success = fields.Bool(required=True, description="Operation success status")
+    data = fields.Nested("UserLoginSchema", required=True, description="User data with tokens")
+    message = fields.Str(required=True, description="Response message")

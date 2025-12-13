@@ -5,6 +5,8 @@ from app.schemas.guest_schema import (
     GuestCreateResponseSchema,
     GuestInfoSchema,
     GuestResponseSchema,
+    UpgradeGuestSchema,
+    UpgradeGuestResponseSchema,
 )
 from app.services import guest_service
 
@@ -79,5 +81,58 @@ class GuestInfo(MethodView):
         except Exception as e:
             return {
                 "message": f"Failed to get guest user: {str(e)}"
+            }, 500
+
+
+@blp.route("/guest/<int:user_id>/upgrade")
+class UpgradeGuest(MethodView):
+    @blp.arguments(UpgradeGuestSchema)
+    @blp.response(200, UpgradeGuestResponseSchema)
+    def put(self, upgrade_data, user_id):
+        """
+        Upgrade a guest user to a regular user with new credentials
+        ---
+        parameters:
+          - name: user_id
+            in: path
+            type: integer
+            required: true
+            description: Guest user ID to upgrade
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema: UpgradeGuestSchema
+              example:
+                email: "newemail@example.com"
+                username: "newusername"
+                password: "newpassword123"
+        responses:
+          200:
+            description: Guest user upgraded successfully
+            schema: UpgradeGuestResponseSchema
+          400:
+            description: Bad request - invalid data or user is not a guest
+          404:
+            description: Guest user not found
+          500:
+            description: Internal server error
+        """
+        try:
+            result = guest_service.upgrade_guest_to_user(user_id, upgrade_data)
+
+            response = {
+                "success": True,
+                "data": result,
+                "message": "Guest user upgraded to regular user successfully"
+            }
+
+            return response
+
+        except Exception as e:
+            return {
+                "success": False,
+                "data": None,
+                "message": f"Failed to upgrade guest user: {str(e)}"
             }, 500
 

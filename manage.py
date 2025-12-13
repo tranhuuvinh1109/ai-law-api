@@ -9,6 +9,8 @@ from sqlalchemy import text
 from app.db import db
 from app.models import (
     UserModel,
+    TransactionModel,
+    AIUsageModel,
 )
 
 

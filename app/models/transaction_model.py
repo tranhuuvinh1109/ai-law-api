@@ -13,7 +13,7 @@ class TransactionModel(db.Model):
     payment_method = db.Column(db.String(50), nullable=False)  # credit_card, bank_transfer, paypal, etc.
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    metadata = db.Column(db.JSON, nullable=True)  # Additional data as JSON
+    additional_data = db.Column(db.JSON, nullable=True)  # Additional data as JSON
 
     # Relationship với User
     user = db.relationship("UserModel", backref=db.backref("transactions", lazy=True))

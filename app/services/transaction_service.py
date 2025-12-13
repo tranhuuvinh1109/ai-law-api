@@ -60,7 +60,7 @@ def create_transaction(transaction_data, user_id):
             status=transaction_data["status"],
             amount=transaction_data["amount"],
             payment_method=transaction_data["payment_method"],
-            metadata=transaction_data.get("metadata")
+            additional_data=transaction_data.get("additional_data")
         )
 
         db.session.add(transaction)
@@ -93,8 +93,8 @@ def update_transaction(transaction_data, transaction_id):
         if "payment_method" in transaction_data and transaction_data["payment_method"]:
             transaction.payment_method = transaction_data["payment_method"]
 
-        if "metadata" in transaction_data:
-            transaction.metadata = transaction_data["metadata"]
+        if "additional_data" in transaction_data:
+            transaction.additional_data = transaction_data["additional_data"]
 
         db.session.commit()
 

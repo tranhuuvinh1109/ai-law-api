@@ -10,7 +10,7 @@ class PlainTransactionSchema(Schema):
     payment_method = fields.Str(required=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
-    metadata = fields.Dict(allow_none=True)
+    additional_data = fields.Dict(allow_none=True)
 
 
 class TransactionSchema(PlainTransactionSchema):
@@ -23,7 +23,7 @@ class TransactionCreateSchema(Schema):
     status = fields.Int(required=True)
     amount = fields.Float(required=True)
     payment_method = fields.Str(required=True)
-    metadata = fields.Dict(allow_none=True)
+    additional_data = fields.Dict(allow_none=True)
 
 
 class TransactionUpdateSchema(Schema):
@@ -31,7 +31,7 @@ class TransactionUpdateSchema(Schema):
     status = fields.Int(allow_none=True)
     amount = fields.Float(allow_none=True)
     payment_method = fields.Str(allow_none=True)
-    metadata = fields.Dict(allow_none=True)
+    additional_data = fields.Dict(allow_none=True)
 
 
 class TransactionFilterSchema(Schema):
